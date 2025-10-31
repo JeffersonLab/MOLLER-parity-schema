@@ -70,6 +70,8 @@ jobs:
 
   create-docs:
     runs-on: ubuntu-latest
+    needs:
+    - create-db-diagram
     permissions:
       pages: write
       id-token: write
