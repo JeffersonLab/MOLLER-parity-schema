@@ -23,7 +23,15 @@ jobs:
 
       - name: Generate DB diagram from DBML
         run: |
-          dbml-renderer -i qwparity_schema.dbml -o qwparity_schema.svg
+          dbml-renderer -i qwparity_schema.dbml -f svg -o qwparity_schema.svg
+          dbml-renderer -i qwparity_schema.dbml -f dot -o qwparity_schema.dot
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: qwparity_schema.svg
+          path: qwparity_schema.svg
+          if-no-files-found: errror
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
