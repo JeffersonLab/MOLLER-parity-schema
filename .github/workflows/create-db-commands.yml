@@ -32,4 +32,4 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: qwparity_schema_${{ matrix.db }}.sql
-          path: qwpartiy_schema_${{ matrix.db }}.sql
+          path: qwparity_schema_${{ matrix.db }}.sql
