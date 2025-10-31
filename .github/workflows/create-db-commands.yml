@@ -9,8 +9,9 @@ on:
 jobs:
   create-db-commands:
     runs-on: ubuntu-latest
-    matrix:
-      db: [ mysql, postgresql ]
+    parallel:
+      matrix:
+        db: [ mysql, postgresql ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
