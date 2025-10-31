@@ -26,18 +26,18 @@ jobs:
           dbml-renderer -i qwparity_schema.dbml -f svg -o qwparity_schema.svg
           dbml-renderer -i qwparity_schema.dbml -f dot -o qwparity_schema.dot
 
-      - name: Upload artifact
+      - name: Upload artifact (svg)
         uses: actions/upload-artifact@v5
         with:
           name: qwparity_schema.svg
           path: qwparity_schema.svg
           if-no-files-found: error
 
-      - name: Upload artifact
+      - name: Upload artifact (dot)
         uses: actions/upload-artifact@v5
         with:
-          name: qwparity_schema.svg
-          path: qwparity_schema.svg
+          name: qwparity_schema.dot
+          path: qwparity_schema.dot
           if-no-files-found: error
 
   create-db-commands:
