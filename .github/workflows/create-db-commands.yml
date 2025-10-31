@@ -7,6 +7,31 @@ on:
   pull_request:
 
 jobs:
+  create-db-diagram:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dbml-renderer
+        run: npm install -g @softwaretechnik/dbml-renderer
+
+      - name: Generate DB diagram from DBML
+        run: |
+          dbml-renderer -i qwparity_schema.dbml -o qwparity_schema.svg
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: qwparity_schema.svg
+          path: qwparity_schema.svg
+          if-no-files-found: errror
+
   create-db-commands:
     runs-on: ubuntu-latest
     strategy:
