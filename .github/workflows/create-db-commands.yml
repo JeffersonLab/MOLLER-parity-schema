@@ -9,7 +9,7 @@ on:
 jobs:
   create-db-commands:
     runs-on: ubuntu-latest
-    parallel:
+    strategy:
       matrix:
         db: [ mysql, postgresql ]
     steps:
