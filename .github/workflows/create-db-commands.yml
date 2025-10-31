@@ -31,14 +31,14 @@ jobs:
         with:
           name: qwparity_schema.svg
           path: qwparity_schema.svg
-          if-no-files-found: errror
+          if-no-files-found: error
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
           name: qwparity_schema.svg
           path: qwparity_schema.svg
-          if-no-files-found: errror
+          if-no-files-found: error
 
   create-db-commands:
     runs-on: ubuntu-latest
@@ -66,4 +66,4 @@ jobs:
         with:
           name: qwparity_schema_${{ matrix.db }}.sql
           path: qwparity_schema_${{ matrix.db }}.sql
-          if-no-files-found: errror
+          if-no-files-found: error
