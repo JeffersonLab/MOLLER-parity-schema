@@ -1,0 +1,38 @@
+---
+name: Attach SQL commands to release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  generate-and-attach-sql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        db: [mysql, postgresql]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dbml-cli
+        run: npm install -g @dbml/cli
+
+      - name: Generate SQL commands from DBML
+        run: |
+          dbml2sql --${{ matrix.db }} -o qwparity_schema_${{ matrix.db }}.sql qwparity_schema.dbml
+
+      - name: Upload SQL to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} \
+            qwparity_schema_${{ matrix.db }}.sql \
+            --clobber
