@@ -152,7 +152,7 @@ Ref: parameter_files.analysis_id > analysis.analysis_id
 
 Table "error_code" {
   "error_code_id" TINYINT [pk, not null, increment]
-  "quantity" TEXT [not null]
+  "description" TEXT [not null]
 }
 
 Table "general_errors" {
@@ -171,141 +171,63 @@ Table "measurement_type" {
   "title" TEXT [not null]
 }
 
-Table "slope_type" {
-  "slope_type_id" INT [pk, not null, increment]
-  "slope" TEXT [not null]
-  "units" TEXT [not null]
+Table "detector_type" {
+  "detector_type_id" INT [pk, not null, increment]
+  "detector" TEXT [not null]
   "title" TEXT [not null]
 }
 
-Table "monitor" {
-  "monitor_id" INT [pk, not null, increment]
-  "quantity" TEXT [not null]
-  "title" TEXT [not null]
+Table "detector" {
+  "detector_id" INT [pk, not null, increment]
+  "detector_type" detector_type_enum [not null]
+  "name" TEXT [not null]
+  "description" TEXT [not null]
 }
 
-Table "main_detector" {
-  "main_detector_id" INT [pk, not null, increment]
-  "quantity" TEXT [not null]
-  "title" TEXT [not null]
+Enum "detector_type_enum" {
+  "md"
+  "beam"
+  "lumi"
+  "bkg"
 }
 
-Table "lumi_detector" {
-  "lumi_detector_id" INT [pk, not null, increment]
-  "quantity" TEXT [not null]
-  "title" TEXT [not null]
-}
-
-Table "md_data" {
-  "md_data_id" INT [pk, not null, increment]
+Table "detector_data" {
+  "detector_data_id" INT [pk, not null, increment]
+  "detector_type_id" CHAR(3) [not null]
   "analysis_id" INT [not null]
-  "main_detector_id" INT
-  "measurement_type_id" CHAR(3) [not null]
-  "subblock" TINYINT [not null]
-  "n" INT [not null]
-  "value" FLOAT [not null]
-  "error" FLOAT [not null]
-}
-
-Ref: md_data.analysis_id > analysis.analysis_id
-Ref: md_data.main_detector_id > main_detector.main_detector_id
-
-Table "md_errors" {
-  "md_errors_id" INT [pk, not null, increment]
-  "analysis_id" INT [not null]
-  "main_detector_id" INT [not null]
+  "slug_id" INT [not null]
+  "detector_id" INT
+  "measure_type_id" CHAR(3) [not null]
   "error_code_id" TINYINT [not null]
-  "n" INT [not null]
-}
-
-Ref: md_errors.analysis_id > analysis.analysis_id
-Ref: md_errors.main_detector_id > main_detector.main_detector_id
-
-Table "lumi_data" {
-  "lumi_data_id" INT [pk, not null, increment]
-  "analysis_id" INT [not null]
-  "lumi_detector_id" INT
-  "measurement_type_id" CHAR(3) [not null]
+  "error_code_n" TINYINT [not null]
   "subblock" TINYINT [not null]
   "n" INT [not null]
   "value" FLOAT [not null]
   "error" FLOAT [not null]
 }
 
-Ref: lumi_data.analysis_id > analysis.analysis_id
-Ref: lumi_data.lumi_detector_id > lumi_detector.lumi_detector_id
+Ref: detector_data.analysis_id > analysis.analysis_id
+Ref: detector_data.detector_id > detector.detector_id
+Ref: detector_data.slug_id > run.slug
 
-Table "lumi_errors" {
-  "lumi_errors_id" INT [pk, not null, increment]
-  "analysis_id" INT [not null]
-  "lumi_detector_id" INT [not null]
-  "error_code_id" TINYINT [not null]
-  "n" INT [not null]
-}
-
-Ref: lumi_errors.analysis_id > analysis.analysis_id
-Ref: lumi_errors.lumi_detector_id > lumi_detector.lumi_detector_id
-
-Table "beam" {
-  "beam_id" INT [pk, not null, increment]
-  "analysis_id" INT [not null]
-  "monitor_id" INT [not null]
-  "measurement_type_id" CHAR(3) [not null]
-  "subblock" TINYINT [not null]
+Table "detector_data_summary" {
+  "id" INT [pk, not null, increment]
+  "detector_type_id" CHAR(3) [not null]
+  "slug_id" INT [not null]
+  "detector_id" INT
+  "measure_type_id" CHAR(3) [not null]
   "n" INT [not null]
   "value" FLOAT [not null]
   "error" FLOAT [not null]
 }
 
-Ref: beam.analysis_id > analysis.analysis_id
-Ref: beam.monitor_id > monitor.monitor_id
-Ref: beam.measurement_type_id > measurement_type.measurement_type_id
-
-Table "beam_errors" {
-  "beam_errors_id" INT [pk, not null, increment]
+Table "grand_correlator" {
+  "correlator_id" INT [pk, not null, increment]
   "analysis_id" INT [not null]
-  "monitor_id" INT [not null]
-  "error_code_id" TINYINT [not null]
-  "n" INT [not null]
+  "matrix" JSON [not null]
 }
 
-Ref: beam_errors.analysis_id > analysis.analysis_id
-Ref: beam_errors.monitor_id > monitor.monitor_id
-Ref: beam_errors.error_code_id > error_code.error_code_id
-
-Table "md_slope" {
-  "md_slope_id" INT [pk, not null, increment]
-  "analysis_id" INT [not null]
-  "slope_type_id" INT [not null]
-  "measurement_type_id" CHAR(3) [not null]
-  "main_detector_id" INT [not null]
-  "subblock" TINYINT [not null]
-  "n" INT [not null]
-  "value" FLOAT [not null]
-  "error" FLOAT [not null]
-}
-
-Ref: md_slope.analysis_id > analysis.analysis_id
-Ref: md_slope.slope_type_id > slope_type.slope_type_id
-Ref: md_slope.measurement_type_id > measurement_type.measurement_type_id
-Ref: md_slope.main_detector_id > main_detector.main_detector_id
-
-Table "lumi_slope" {
-  "lumi_slope_id" INT [pk, not null, increment]
-  "analysis_id" INT [not null]
-  "slope_type_id" INT [not null]
-  "measurement_type_id" CHAR(3) [not null]
-  "lumi_detector_id" INT [not null]
-  "subblock" TINYINT [not null]
-  "n" INT [not null]
-  "value" FLOAT [not null]
-  "error" FLOAT [not null]
-}
-
-Ref: lumi_slope.analysis_id > analysis.analysis_id
-Ref: lumi_slope.slope_type_id > slope_type.slope_type_id
-Ref: lumi_slope.measurement_type_id > measurement_type.measurement_type_id
-Ref: lumi_slope.lumi_detector_id > lumi_detector.lumi_detector_id
+Ref: grand_correlator.analysis_id > analysis.analysis_id
 
 Table "slow_controls_settings" {
   "slow_controls_settings_id" INT [pk, not null, increment]
@@ -371,7 +293,7 @@ Table "modulation_type" {
 Table "beam_optics" {
   "beam_optics_id" INT [pk, not null, increment]
   "analysis_id" INT [not null]
-  "monitor_id" INT [not null]
+  "detector_id" INT [not null]
   "modulation_type_id" INT [not null]
   "n" INT [not null]
   "amplitude" FLOAT [not null]
@@ -384,6 +306,6 @@ Table "beam_optics" {
 }
 
 Ref: beam_optics.analysis_id > analysis.analysis_id
-Ref: beam_optics.monitor_id > monitor.monitor_id
+Ref: beam_optics.detector_id > detector.detector_id
 Ref: beam_optics.modulation_type_id > modulation_type.modulation_type_id
 
