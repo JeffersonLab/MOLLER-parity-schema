@@ -1,0 +1,528 @@
+// ============================================================================
+// MOLLER Parity schema (Project Header Metadata)
+// ============================================================================
+Project MOLLER_Parity_Schema {
+  database_type: 'MySQL'
+  Note: '''
+    # MOLLER Parity Schema
+    This database schema is used to populate data produced during the integration mode running of MOLLER experiment.
+    
+    **Author:** Buddhini Waidyawansa <waidya@jlab.org>
+    **Created:** 06-25-2026
+    **Last Updated:** 07-13-2026
+  '''
+}
+
+/*
+-- ============================================================================
+-- Enums
+-- ============================================================================
+*/
+
+Enum "slow_controls_settings_slow_helicity_plate_enum" {
+  "out"
+  "in"
+  "unknown"
+}
+
+Enum "slow_controls_settings_passive_helicity_plate_enum" {
+  "out"
+  "in"
+  "unknown"
+}
+
+Enum "slow_controls_settings_wien_reversal_enum" {
+  "indeterminate"
+  "normal"
+  "reverse"
+  "transverse_vertical"
+  "transverse_horizontal"
+}
+
+Enum "slow_controls_settings_precession_reversal_enum" {
+  "CCW"
+  "CW"
+  "reverse"
+  "normal"
+}
+
+Enum "slow_controls_settings_charge_feedback_enum" {
+  "off"
+  "on"
+  "unknown"
+}
+
+Enum "slow_controls_settings_position_feedback_enum" {
+  "off"
+  "on"
+  "unknown"
+}
+
+Enum "summary_wien_detector_metrics_wien_reversal_enum" {
+  "indeterminate"
+  "normal"
+  "reverse"
+  "transverse_vertical"
+  "transverse_horizontal"
+}
+
+/*
+-- ============================================================================
+-- REFERENCE TABLES
+-- ============================================================================
+*/
+
+Table "db_schema" {
+  "db_schema_id" INT [pk, increment]
+  "major_release_number" CHAR(2) [not null]
+  "minor_release_number" CHAR(2) [not null]
+  "point_release_number" CHAR(4) [not null]
+  "time" TIMESTAMP [not null]
+  "script_name" TEXT
+
+  Indexes {
+    time [name: "idx_schema_time"]
+  }
+}
+
+Table "good_for" {
+  "good_for_id" INT [pk, increment]
+  "description" TEXT
+}
+
+Table "error_code" {
+  "error_code_id" INT [pk, increment]
+  "description" TEXT [not null]
+}
+
+Table "measurement_type" {
+  "measurement_type_id" CHAR(3) [pk]
+  "units" VARCHAR(50) [not null]
+  "title" VARCHAR(255) [not null]
+}
+
+
+Table "detector_type" {
+  "detector_type_id" INT [pk, increment]
+  "detector" VARCHAR(50) [not null]
+  "title" VARCHAR(255) [not null]
+
+  Indexes {
+    detector [name: "idx_detector_type_name"]
+  }
+}
+
+Table "slow_control_detector" {
+  "slow_control_detector_id" INT [pk, increment]
+  "name" VARCHAR(255) [unique, not null]
+  "units" VARCHAR(50) [not null]
+  "comment" TEXT [not null]
+
+  Indexes {
+    name [name: "idx_sc_detector_name"]
+  }
+}
+
+Table "modulation_type" {
+  "modulation_type_id" INT [pk, increment]
+  "type" VARCHAR(255)
+}
+
+
+/*
+-- ============================================================================
+-- CORE EXPERIMENTAL TABLES & TIME WINDOWS
+-- ============================================================================
+*/
+
+Table "detector" {
+  "detector_id" INT [pk, increment]
+  "detector_type_id" INT [not null]
+  "name" VARCHAR(255) [unique, not null]
+  "units" VARCHAR(255)
+  "description" TEXT
+
+  Indexes {
+    name [name: "idx_detector_name"]
+    detector_type_id [name: "idx_detector_type_enum"]
+  }
+}
+
+Table "data_taking_period" {
+  "period_id" INT [pk, increment]
+  "period_type" VARCHAR(50)
+  "parent_id" INT
+  "run_number" INT [not null]
+  "segment_number" SMALLINT
+  "good_for_id" INT [not null]
+  "data_quality" VARCHAR(50) [not null]
+  "slug_number" SMALLINT [not null]
+  "wien_number" SMALLINT [not null]
+  "full_run" BOOLEAN [not null, default: TRUE]
+  "start_time" TIMESTAMP
+  "end_time" TIMESTAMP
+  "tz_offset" VARCHAR(32)
+  "first_minipulses" INT
+  "last_minipulses" INT
+  "num_minipulses" BIGINT [not null]
+  "num_quartets" BIGINT [not null]
+  "comment" TEXT
+
+  Indexes {
+    (run_number, segment_number) [unique, name: "uq_period_run_segment"]
+    (period_type, parent_id) [name: "idx_period_type_hierarchy"]
+    (slug_number, wien_number) [name: "idx_period_slugs"]
+    (start_time, end_time) [name: "idx_period_times"]
+  }
+}
+
+Table "ee_seeds" {
+  "ee_seed_id" INT [pk, increment]
+  "first_period_id" INT [not null]
+  "last_period_id" INT [not null]
+  "seed" TEXT
+  "comment" TEXT
+}
+
+Table "ep_seeds" {
+  "ep_seed_id" INT [pk, increment]
+  "first_period_id" INT [not null]
+  "last_period_id" INT [not null]
+  "seed" TEXT
+  "comment" TEXT
+}
+
+Table "analysis" {
+  "analysis_id" INT [pk, increment]
+  "period_id" INT [not null]
+  "ee_seed_id" INT [not null]
+  "ep_seed_id" INT [not null]
+  "time" TIMESTAMP
+  "ee_bf_checksum" VARCHAR(64)
+  "ep_bf_checksum" VARCHAR(64)
+  "beam_mode" VARCHAR(50)
+  "regression_status" BOOLEAN [not null, default: FALSE]
+  "rntuple_enabled" BOOLEAN [not null, default: FALSE]
+  "root_version" VARCHAR(50) [not null]
+  "root_file_time" VARCHAR(100) [not null]
+  "root_file_host" VARCHAR(100) [not null]
+  "root_file_user" VARCHAR(100) [not null]
+  "analyzer_name" VARCHAR(100) [not null]
+  "analyzer_argv" TEXT [not null]
+  "analyzer_svn_rev" VARCHAR(50) [not null]
+  "analyzer_svn_lc_rev" VARCHAR(50) [not null]
+  "analyzer_svn_url" TEXT [not null]
+  "roc_flags" TEXT [not null]
+  "git_commit_sha" CHAR(40)
+  "docker_image_digest" VARCHAR(100)
+  "parameter_files" JSON
+
+  Indexes {
+    (analysis_id, period_id) [name: "idx_analysis_period_perf"]
+  }
+}
+
+
+/*
+-- ============================================================================
+-- MEASUREMENTS, SLOW CONTROLS & DIAGNOSTIC DATA
+-- ============================================================================
+*/
+
+Table "general_errors" {
+  "general_errors_id" BIGINT [pk, increment]
+  "analysis_id" INT [not null]
+  "error_code_id" INT [not null]
+  "num_events" BIGINT [not null]
+}
+
+Table "detector_data" {
+  "detector_data_id" BIGINT [pk, increment]
+  "detector_type_id" INT [not null]
+  "analysis_id" INT [not null]
+  "detector_id" INT
+  "measurement_type_id" CHAR(3) [not null]
+  "error_code_id" INT [not null]
+  "error_code_n" TINYINT [not null]
+  "sub_block" SMALLINT [not null]
+  "num_minipulses" BIGINT [not null]
+  "value" FLOAT [not null]
+  "error" FLOAT [not null]
+
+  Indexes {
+    (analysis_id, detector_id, measurement_type_id, sub_block, value, error) [name: "idx_det_data_lookup"]
+    detector_type_id [name: "idx_det_data_type_fk"]
+    error_code_id [name: "idx_det_data_err_fk"]
+    measurement_type_id [name: "idx_det_data_measure_fk"]
+  }
+}
+
+Table "grand_correlator" {
+  "correlator_id" INT [pk, increment]
+  "analysis_id" INT [not null]
+  "matrix" JSON [not null]
+}
+
+Table "selected_sensitivities" {
+  "sensitivity_id" INT [pk, increment]
+  "analysis_id" INT [not null]
+  "independant_detector_id" INT [not null]
+  "dependant_detector_id" INT [not null]
+  "measurement_type_id" CHAR(3) [not null]
+  "per_pair_good_count" INT [not null]
+  "slope" FLOAT [not null]
+  "error" FLOAT [not null]
+}
+
+Table "slow_controls_settings" {
+  "slow_controls_settings_id" INT [pk, increment]
+  "period_id" INT [not null]
+  "slow_helicity_plate" slow_controls_settings_slow_helicity_plate_enum
+  "passive_helicity_plate" slow_controls_settings_passive_helicity_plate_enum
+  "wien_reversal" slow_controls_settings_wien_reversal_enum
+  "precession_reversal" slow_controls_settings_precession_reversal_enum
+  "helicity_window_length" INT
+  "charge_feedback" slow_controls_settings_charge_feedback_enum
+  "position_feedback" slow_controls_settings_position_feedback_enum
+  "target_position" TEXT
+
+  Indexes {
+    (period_id, slow_helicity_plate) [name: "idx_sc_settings_lookup"]
+  }
+}
+
+Table "slow_controls_data" {
+  "slow_controls_data_id" BIGINT [pk, increment]
+  "period_id" INT [not null]
+  "slow_control_detector_id" INT [not null]
+  "num_events" BIGINT [not null]
+  "value" FLOAT [not null]
+  "error" FLOAT [not null]
+  "min_value" FLOAT [not null]
+  "max_value" FLOAT [not null]
+
+  Indexes {
+    (period_id, slow_control_detector_id) [name: "idx_sc_data_period_det"]
+  }
+}
+
+Table "ee_bf_test" {
+  "ee_bf_test_id" INT [pk, increment]
+  "analysis_id" INT [not null]
+  "test_number" SMALLINT
+  "test_value" FLOAT
+}
+
+Table "ep_bf_test" {
+  "ep_bf_test_id" INT [pk, increment]
+  "analysis_id" INT [not null]
+  "test_number" SMALLINT
+  "test_value" FLOAT
+}
+
+Table "beam_modulation" {
+  "beam_mod_id" BIGINT [pk, increment]
+  "analysis_id" INT [not null]
+  "monitor_id" INT [not null]
+  "modulation_type_id" INT [not null]
+  "num_events" BIGINT [not null]
+  "amplitude" FLOAT [not null]
+  "phase" FLOAT [not null]
+  "offset" FLOAT [not null]
+  "a_error" FLOAT [not null]
+  "p_error" FLOAT [not null]
+  "o_error" FLOAT [not null]
+  "gof_para" FLOAT [not null]
+
+  Indexes {
+    (analysis_id, monitor_id) [name: "idx_beam_modulation_lookup"]
+  }
+}
+
+/*
+-- ============================================================================
+-- VIEWS (VIRTUAL TABLES)
+-- Internally stored queries for easy access of most commonly required plots
+-- ============================================================================
+*/
+
+Table view_slug_summaries [note: 'VIRTUAL VIEW: Aggregates quality-enforced runlet values over slugs.'] {
+  slug_number smallint
+  period_id int
+  run_number int
+  segment_number smallint
+  analysis_id int
+  detector_data_id bigint
+  detector_id int
+  detector_name varchar(255)
+  detector_type varchar(50)
+  measurement_type_id char(3)
+  detector_value float
+  detector_error float
+  sensitivity_id int
+  independant_detector_id int
+  sensitivity_slope float
+  sensitivity_slope_error float
+  per_pair_good_count int
+}
+
+/*
+-- ============================================================================
+-- SUMMARY TABLES
+-- ============================================================================
+*/
+
+Table "summary_slug_detector_metrics" {
+  "slug_number" SMALLINT [not null]
+  "slow_helicity_plate_status" VARCHAR(10) [not null]
+  "detector_name" TEXT
+  "detector_id" INT [not null]
+  "detector_type_id" INT [not null]
+  "measurement_type_id" CHAR(3) [not null]
+  "weighted_avg_value" DOUBLE [not null]
+  "weighted_avg_error" DOUBLE [not null]
+  "total_runlets_aggregated" INT [not null]
+  "total_minipulses_aggregated" BIGINT [not null]
+  "min_observed_value" FLOAT [not null]
+  "max_observed_value" FLOAT [not null]
+  "last_updated_period" TIMESTAMP
+  "computed_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    (slug_number, slow_helicity_plate_status, detector_id, measurement_type_id, detector_type_id) [pk]
+  }
+}
+
+Table "summary_wien_detector_metrics" {
+  "wien_number" SMALLINT [not null]
+  "wien_reversal" summary_wien_detector_metrics_wien_reversal_enum [not null]
+  "detector_name" TEXT
+  "slow_helicity_plate_status" VARCHAR(10) [not null]
+  "detector_id" INT [not null]
+  "detector_type_id" INT [not null]
+  "measurement_type_id" CHAR(3) [not null]
+  "weighted_avg_value" DOUBLE [not null]
+  "weighted_avg_error" DOUBLE [not null]
+  "total_slugs_aggregated" SMALLINT [not null]
+  "total_runlets_aggregated" INT [not null]
+  "total_minipulses_aggregated" BIGINT [not null]
+  "min_observed_value" FLOAT [not null]
+  "max_observed_value" FLOAT [not null]
+  "last_updated_period" TIMESTAMP
+  "computed_at" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+
+  Indexes {
+    (wien_number, slow_helicity_plate_status, wien_reversal, detector_id, measurement_type_id, detector_type_id) [pk]
+    (wien_number, slow_helicity_plate_status, wien_reversal) [name: "idx_summary_wien_lookup"]
+  }
+}
+
+/*
+-- ============================================================================
+-- EVENT LOGS
+-- ============================================================================
+*/
+
+Table "event_execution_log" {
+  "log_id" INT [pk, increment]
+  "event_name" VARCHAR(100) [not null]
+  "execution_time" TIMESTAMP [default: `CURRENT_TIMESTAMP`]
+  "status" VARCHAR(20) [not null]
+  "message" TEXT
+}
+
+/*
+-- ============================================================================
+-- FOREIGN KEYS
+-- ============================================================================
+*/
+
+Ref "fk_detector_type":"detector_type"."detector_type_id" < "detector"."detector_type_id"
+
+Ref "fk_period_parent":"data_taking_period"."period_id" < "data_taking_period"."parent_id"
+
+Ref "fk_period_good_for":"good_for"."good_for_id" < "data_taking_period"."good_for_id"
+
+Ref "fk_ee_seeds_first_period":"data_taking_period"."period_id" < "ee_seeds"."first_period_id"
+
+Ref "fk_ee_seeds_last_period":"data_taking_period"."period_id" < "ee_seeds"."last_period_id"
+
+Ref "fk_ep_seeds_first_period":"data_taking_period"."period_id" < "ep_seeds"."first_period_id"
+
+Ref "fk_ep_seeds_last_period":"data_taking_period"."period_id" < "ep_seeds"."last_period_id"
+
+Ref "fk_analysis_period":"data_taking_period"."period_id" < "analysis"."period_id"
+
+Ref "fk_analysis_ee_seed":"ee_seeds"."ee_seed_id" < "analysis"."ee_seed_id"
+
+Ref "fk_analysis_ep_seed":"ep_seeds"."ep_seed_id" < "analysis"."ep_seed_id"
+
+Ref "fk_gen_err_analysis":"analysis"."analysis_id" < "general_errors"."analysis_id"
+
+Ref "fk_gen_err_code":"error_code"."error_code_id" < "general_errors"."error_code_id"
+
+Ref "fk_det_data_type":"detector_type"."detector_type_id" < "detector_data"."detector_type_id"
+
+Ref "fk_det_data_analysis":"analysis"."analysis_id" < "detector_data"."analysis_id"
+
+Ref "fk_det_data_detector":"detector"."detector_id" < "detector_data"."detector_id"
+
+Ref "fk_det_data_meas_type":"measurement_type"."measurement_type_id" < "detector_data"."measurement_type_id"
+
+Ref "fk_det_data_err":"error_code"."error_code_id" < "detector_data"."error_code_id"
+
+Ref "fk_grand_corr_analysis":"analysis"."analysis_id" < "grand_correlator"."analysis_id"
+
+Ref "fk_sens_analysis":"analysis"."analysis_id" < "selected_sensitivities"."analysis_id"
+
+Ref "fk_sens_indep_det":"detector"."detector_id" < "selected_sensitivities"."independant_detector_id"
+
+Ref "fk_sens_dep_det":"detector"."detector_id" < "selected_sensitivities"."dependant_detector_id"
+
+Ref "fk_sens_meas_type":"measurement_type"."measurement_type_id" < "selected_sensitivities"."measurement_type_id"
+
+Ref "fk_sc_settings_period":"data_taking_period"."period_id" < "slow_controls_settings"."period_id"
+
+Ref "fk_sc_data_period":"data_taking_period"."period_id" < "slow_controls_data"."period_id"
+
+Ref "fk_sc_data_detector":"slow_control_detector"."slow_control_detector_id" < "slow_controls_data"."slow_control_detector_id"
+
+Ref "fk_ee_bf_test_analysis":"analysis"."analysis_id" < "ee_bf_test"."analysis_id"
+
+Ref "fk_ep_bf_test_analysis":"analysis"."analysis_id" < "ep_bf_test"."analysis_id"
+
+Ref "fk_beam_mod_analysis":"analysis"."analysis_id" < "beam_modulation"."analysis_id"
+
+Ref "fk_beam_mod_monitor":"detector"."detector_id" < "beam_modulation"."monitor_id"
+
+Ref "fk_beam_mod_type":"modulation_type"."modulation_type_id" < "beam_modulation"."modulation_type_id"
+
+Ref "fk_summary_slug_detector":"detector"."detector_id" < "summary_slug_detector_metrics"."detector_id"
+
+Ref "fk_summary_slug_det_type":"detector_type"."detector_type_id" < "summary_slug_detector_metrics"."detector_type_id"
+
+Ref "fk_summary_slug_meas_type":"measurement_type"."measurement_type_id" < "summary_slug_detector_metrics"."measurement_type_id"
+
+Ref "fk_summary_wien_detector":"detector"."detector_id" < "summary_wien_detector_metrics"."detector_id"
+
+Ref "fk_summary_wien_det_type":"detector_type"."detector_type_id" < "summary_wien_detector_metrics"."detector_type_id"
+
+Ref "fk_summary_wien_meas_type":"measurement_type"."measurement_type_id" < "summary_wien_detector_metrics"."measurement_type_id"
+
+
+/*
+-- ============================================================================
+-- VIRTUAL ORGANIZERS
+-- ============================================================================
+*/
+
+TableGroup Experimental_Core {
+data_taking_period
+analysis
+ee_seeds
+ep_seeds
+detector}
+
+TableGroup Virtual_Layers {
+view_slug_summaries
+}
