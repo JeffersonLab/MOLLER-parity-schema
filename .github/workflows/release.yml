@@ -27,12 +27,12 @@ jobs:
 
       - name: Generate SQL commands from DBML
         run: |
-          dbml2sql --${{ matrix.db }} -o qwparity_schema_${{ matrix.db }}.sql qwparity_schema.dbml
+          dbml2sql --${{ matrix.db }} -o parity_schema_${{ matrix.db }}.sql parity_schema.dbml
 
       - name: Upload SQL to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload ${{ github.event.release.tag_name }} \
-            qwparity_schema_${{ matrix.db }}.sql \
+            parity_schema_${{ matrix.db }}.sql \
             --clobber
